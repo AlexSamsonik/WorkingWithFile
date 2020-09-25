@@ -3,8 +3,9 @@
 import os
 import shutil
 import logging
+import pytest
 from common.constants import TEMP_DIRECTORY
-from common.constants import FILE_NAME
+from common.constants import LIST_FILE_NAME
 
 log = logging.getLogger()
 
@@ -12,26 +13,32 @@ log = logging.getLogger()
 def setup_module():
     """Create temporally directory."""
 
-    try:
-        os.mkdir(TEMP_DIRECTORY)
-    except OSError:
-        log.info(f"Creation of the directory '{TEMP_DIRECTORY}' failed.")
-    else:
-        log.info(f"Successfully created the directory '{TEMP_DIRECTORY}'.")
+    log.info(f"Create the directory '{TEMP_DIRECTORY}'.")
+    os.mkdir(TEMP_DIRECTORY)  # How high is the probability that this will not work out ?
+    # TODO: It will work only if everything is OK.
+    #  Need to decide which strategy to choose when something went wrong.
+
+    # TODO: Next strategy:
+    #  1. os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+    #  2. try/except
+    #  3. if os.path.exists(TEMP_DIRECTORY): ... ;
 
 
 def teardown_module():
     """Recursively delete a directory tree."""
 
-    try:
-        shutil.rmtree(TEMP_DIRECTORY)
-    except OSError:
-        log.info(f"Deletion of the directory '{TEMP_DIRECTORY} failed.")
-    else:
-        log.info(f"Successfully deleted the directory '{TEMP_DIRECTORY}'.")
+    log.info(f"Delete the directory tree '{TEMP_DIRECTORY}'.")
+    shutil.rmtree(TEMP_DIRECTORY)  # How high is the probability that this will not work out ?
+    # TODO: It will work only if everything is OK.
+    #  Need to decide which strategy to choose when something went wrong.
+
+    # TODO: Next strategy:
+    #  1. try/except
+    #  2. if not os.path.exists(TEMP_DIRECTORY): ... ;
 
 
-def test_create_files():
+@pytest.mark.parametrize("file_name", LIST_FILE_NAME)
+def test_create_files(log_test_name, file_name):
     """ Test file creation.
 
     Steps:
@@ -43,9 +50,11 @@ def test_create_files():
     """
 
     # Step 2
-    log.info(f"Creating file by name '{FILE_NAME}'")
-    open(os.path.join(TEMP_DIRECTORY, FILE_NAME), "x").close()
+    log.info(f"Creating file by name '{file_name}' inside the temporally directory '{TEMP_DIRECTORY}'.")
+    open(os.path.join(TEMP_DIRECTORY, file_name), "x").close()
 
     # Step 3
-    log.info(f"Verifies that file '{os.path.join(TEMP_DIRECTORY, FILE_NAME)}' has been created successfully.")
-    assert os.path.exists(os.path.join(TEMP_DIRECTORY, FILE_NAME)), f"File '{FILE_NAME}' has not created successfully."
+    log.info(f"Verifies that file '{file_name}' has been created successfully "
+             f"inside the temporally directory '{TEMP_DIRECTORY}'.")
+    assert os.path.exists(os.path.join(TEMP_DIRECTORY, file_name)),\
+        f"File '{file_name}' has not created successfully inside the temporally directory '{TEMP_DIRECTORY}'."
