@@ -51,7 +51,7 @@ def test_create_file(log_test_name, file_name):
 
     # Step 2
     log.info(f"Creating file by name '{file_name}' inside the temporally directory '{TEMP_DIRECTORY}'.")
-    open(os.path.join(TEMP_DIRECTORY, file_name), "x").close()
+    open(os.path.join(TEMP_DIRECTORY, file_name), "x").close()  # TODO: try/except ?
 
     # Step 3
     log.info(f"Verifies that file '{file_name}' has been created successfully "
@@ -72,9 +72,10 @@ def test_add_content_to_file(log_test_name):
     5. Remove file from the temporally directory.
 
     :param log_test_name: pytest fixture which log when test starting and finishing.
-    :return:
     """
-    with open(os.path.join(TEMP_DIRECTORY, FILE_NAME)) as file:
+
+    # Step 4
+    with open(os.path.join(TEMP_DIRECTORY, FILE_NAME)) as file:  # TODO: try/except ?
         context = file.read()
     log.info(f"Verifies that file context equals '{FILE_NAME_CONTEXT}'.")
     assert context == FILE_NAME_CONTEXT, "File context does not match"
