@@ -1,7 +1,8 @@
 import pytest
 import logging
 import os
-from common.constants import (TEMP_DIRECTORY, FILE_NAME, FILE_NAME_CONTEXT)
+from common.constants import (TEMP_DIRECTORY, FILE_NAME, FILE_NAME_CONTEXT, FILE_OWNER)
+from file_system_operation.ext4_operation import (create_file, remove_file, add_context)
 
 log = logging.getLogger()
 
@@ -22,7 +23,13 @@ def log_test_name(request):
 @pytest.fixture(scope="function")
 def add_context_to_file():
     """Adding context to the file."""
-    file_path = os.path.join(TEMP_DIRECTORY, FILE_NAME)
-    with open(file_path, "w") as file:
-        log.info(f"Adding context to the '{file_path}'")
-        file.write(FILE_NAME_CONTEXT)
+    add_context(os.path.join(TEMP_DIRECTORY, FILE_NAME), FILE_NAME_CONTEXT)
+
+
+@pytest.fixture(scope="function")
+def create_and_delete_file():
+    """Create and remove file."""
+
+    file_path = os.path.join(TEMP_DIRECTORY, FILE_OWNER)
+    yield create_file(file_path)
+    remove_file(file_path)
