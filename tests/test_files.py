@@ -5,9 +5,10 @@ import logging
 import pytest
 from common.constants import (TEMP_DIRECTORY, LIST_FILE_NAME, FILE_NAME, FILE_NAME_CONTEXT, FILE_OWNER,
                               FILE_NOBODY_OWNER)
-from common.constants import (UID, GID, UID_NOBODY)
+from common.constants import (UID, GID, UID_NOBODY, GID_NOBODY)
 from common.constants import MODE_644
-from file_system_operation.ext4_operation import (create_directory, delete_directory_tree, create_files)
+from common.constants import PERMISSION_MSG
+from file_system_operation.ext4_operation import (create_directory, delete_directory_tree, create_files, change_owner)
 
 log = logging.getLogger()
 
@@ -56,7 +57,7 @@ def test_file_mode(file_name):
     log.info(f"Verifies that file mode equals 0o644 from file '{file_path}'.")
     actual_mode = oct(os.stat(file_path).st_mode)[-3:]
     assert actual_mode == MODE_644, f"File '{file_path}' does not have mode 0o644. " \
-                                    f"Actual: '{actual_mode}' Expected: {MODE_644}"
+                                    f"Actual: '{actual_mode}' Expected: '{MODE_644}'."
 
 
 @pytest.mark.usefixtures("add_context_to_file")
@@ -130,3 +131,26 @@ def test_change_uid():
     actual_uid = os.stat(FILE_NOBODY_OWNER).st_uid
     log.info(f"Verifies that uid equals UID.")
     assert actual_uid == UID_NOBODY, f"File uid does not match. Actual UID: '{actual_uid}' Expected UID: '{UID}'"
+
+
+def test_catch_permission_error():
+    """Test catch permission error.
+
+    Steps:
+    1. Create temporally directory if it does not exist.
+    2. Create file inside temporally directory.
+    3. Try to change uid to nobody.
+    4. Verifies that PermissionError Exception was received.
+    5. Remove file from the temporally directory.
+    """
+
+    # Step 3.
+    with pytest.raises(PermissionError) as permission:
+        file_path = os.path.join(TEMP_DIRECTORY, FILE_NOBODY_OWNER)
+        change_owner(file_path, UID_NOBODY, GID_NOBODY)
+
+    # Step 4.
+    permission_msg = permission.value.args[1]
+    log.info(f"Verifies that catch PermissionError Exception.")
+    assert permission_msg == PERMISSION_MSG, f"PermissionError does not catch. Actual message: '{permission_msg}' " \
+                                             f"Expected message: '{PERMISSION_MSG}'"

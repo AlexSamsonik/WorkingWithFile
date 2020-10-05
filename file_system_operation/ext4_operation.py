@@ -41,16 +41,17 @@ def delete_directory_tree(dir_path):
         log.info(f"Successfully deleted the directory three '{dir_path}'.")
 
 
-def create_file(file_path):
-    """Create this file with the given access mode, if it doesn't exist.
+def create_file(file_path, mode=0o644):
+    """Create this file with the mode 0o644 (-rw-r--r--), if it doesn't exist.
 
     :param file_path: path to the file.
+    :param mode: mode for file.
     :return: path to the file.
     """
 
     try:
         log.info(f"Try to create the file '{file_path}'.")
-        Path(file_path).touch(exist_ok=True)
+        Path(file_path).touch(mode=mode, exist_ok=True)
     except OSError:
         log.error(f"Creation of the file '{file_path}' failed.")
         raise

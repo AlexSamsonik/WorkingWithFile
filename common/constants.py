@@ -15,4 +15,6 @@ GID_NOBODY = 65534
 
 MODE_644 = "644"
 
+PERMISSION_MSG = "Operation not permitted"
+
 LIST_FILE_NAME = ["linux.txt", "windows.rtf", "macOS.doc", FILE_NAME, FILE_OWNER, FILE_NOBODY_OWNER]
