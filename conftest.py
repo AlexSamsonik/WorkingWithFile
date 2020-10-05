@@ -1,13 +1,14 @@
 import pytest
 import logging
 import os
-from common.constants import (TEMP_DIRECTORY, FILE_NAME, FILE_NAME_CONTEXT, FILE_OWNER)
-from file_system_operation.ext4_operation import (create_file, remove_file, add_context)
+from common.constants import (TEMP_DIRECTORY, FILE_NAME, FILE_NAME_CONTEXT, FILE_NOBODY_OWNER)
+from common.constants import (UID_NOBODY, GID_NOBODY)
+from file_system_operation.ext4_operation import (add_context, change_owner)
 
 log = logging.getLogger()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="function", autouse=True)
 def log_test_name(request):
     """ Log when test started and finished."""
 
@@ -27,9 +28,7 @@ def add_context_to_file():
 
 
 @pytest.fixture(scope="function")
-def create_and_delete_file():
-    """Create and remove file."""
-
-    file_path = os.path.join(TEMP_DIRECTORY, FILE_OWNER)
-    yield create_file(file_path)
-    remove_file(file_path)
+def change_owner_to_nobody():
+    """Change owner to nobody."""
+    file_path = os.path.join(TEMP_DIRECTORY, FILE_NOBODY_OWNER)
+    change_owner(file_path, UID_NOBODY, GID_NOBODY)
