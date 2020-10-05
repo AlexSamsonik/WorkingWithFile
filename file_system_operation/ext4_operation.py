@@ -28,7 +28,7 @@ def create_directory(dir_path):
 def delete_directory_tree(dir_path):
     """Recursively delete a directory tree.
 
-    :param dir_path: path to a directory tree
+    :param dir_path: path to the directory tree
     """
 
     try:
@@ -77,16 +77,13 @@ def remove_file(file_path):
     """
 
     try:
-        log.info(f"Remove file '{file_path}'.")
+        log.info(f"Try to removal the file '{file_path}'.")
         Path(file_path).unlink()
-    except (IsADirectoryError, NotADirectoryError, PermissionError):
-        log.error(f"Removing file '{file_path}' failed.")
-        raise
-    except FileNotFoundError:
-        log.error(f"No such file or directory: '{file_path}'.")
+    except OSError:
+        log.error(f"Removing of the file '{file_path}' failed.")
         raise
     else:
-        log.info(f"Successfully removing file '{file_path}'.")
+        log.info(f"Successfully removed the file '{file_path}'.")
 
 
 def add_context(file_path, file_context):
