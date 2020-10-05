@@ -4,9 +4,9 @@ import os
 import logging
 import pytest
 from common.constants import (TEMP_DIRECTORY, LIST_FILE_NAME, FILE_NAME, FILE_NAME_CONTEXT, FILE_OWNER,
-                              FILE_NOBODY_OWNER)
+                              FILE_NOBODY_OWNER, FILE_READ_ONLY)
 from common.constants import (UID, GID, UID_NOBODY, GID_NOBODY)
-from common.constants import MODE_644
+from common.constants import (MODE_400, MODE_644)
 from common.constants import PERMISSION_MSG
 from file_system_operation.ext4_operation import (create_directory, delete_directory_tree, create_files, change_owner)
 
@@ -116,19 +116,19 @@ def test_check_gid():
 
 
 @pytest.mark.xfail()
-@pytest.mark.usefixtures("change_owner_to_nobody")
-def test_change_uid():
+def test_change_uid(change_owner_to_nobody):
     """Test change file UID.
 
     Steps:
     1. Create temporally directory if it does not exist.
     2. Create file inside temporally directory.
     3. Change uid to nobody.
-    3. Verifies that uid equals UID_NOBODY.
+    3. Verifies that uid equals 65534.
     4. Remove file from the temporally directory.
     """
 
-    actual_uid = os.stat(FILE_NOBODY_OWNER).st_uid
+    # Step 4
+    actual_uid = os.stat(change_owner_to_nobody).st_uid
     log.info(f"Verifies that uid equals UID.")
     assert actual_uid == UID_NOBODY, f"File uid does not match. Actual UID: '{actual_uid}' Expected UID: '{UID}'"
 
@@ -144,13 +144,32 @@ def test_catch_permission_error():
     5. Remove file from the temporally directory.
     """
 
-    # Step 3.
+    # Step 3
     with pytest.raises(PermissionError) as permission:
         file_path = os.path.join(TEMP_DIRECTORY, FILE_NOBODY_OWNER)
         change_owner(file_path, UID_NOBODY, GID_NOBODY)
 
-    # Step 4.
+    # Step 4
     permission_msg = permission.value.args[1]
     log.info(f"Verifies that catch PermissionError Exception.")
     assert permission_msg == PERMISSION_MSG, f"PermissionError does not catch. Actual message: '{permission_msg}' " \
-                                             f"Expected message: '{PERMISSION_MSG}'"
+                                             f"Expected message: '{PERMISSION_MSG}'."
+
+
+def test_permission_read_only_by_owner(disable_write_permission):
+    """Test change permission to read only by owner.
+
+    Steps:
+    1. Create temporally directory if it does not exist.
+    2. Create file inside temporally directory.
+    3. Change permission to read only by owner.
+    4. Verifies that file mode equals 0o400 (-r--------).
+    5. Remove file from the temporally directory.
+    """
+
+    # Step 4
+    file_path = disable_write_permission
+    log.info(f"Verifies that file mode equals 0o400 from file '{file_path}'.")
+    actual_mode = oct(os.stat(file_path).st_mode)[-3:]
+    assert actual_mode == MODE_400, f"File '{file_path}' does not have mode 0o400. " \
+                                    f"Actual: '{actual_mode}' Expected: '{MODE_400}'."

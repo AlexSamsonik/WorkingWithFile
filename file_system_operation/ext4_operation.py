@@ -78,7 +78,7 @@ def remove_file(file_path):
     """
 
     try:
-        log.info(f"Try to removal the file '{file_path}'.")
+        log.info(f"Try to remove the file '{file_path}'.")
         Path(file_path).unlink()
     except OSError:
         log.error(f"Removing of the file '{file_path}' failed.")
@@ -121,3 +121,20 @@ def change_owner(path: str, uid: int, gid: int):
         raise
     else:
         log.info(f"Successfully changed the owner and group to the numeric uid={uid} and gid={gid} from '{path}'.")
+
+
+def change_file_mode(path, mode):
+    """Change the permissions of the path.
+
+    :param path: path to the file.
+    :param mode: new mode.
+    """
+
+    try:
+        log.info(f"Try to change the permission to the path '{path}' by mode '{oct(mode)}'.")
+        Path(path).chmod(mode)
+    except OSError:
+        log.error(f"Changing of the permission failed to the '{path}'.")
+        raise
+    else:
+        log.info(f"Successfully changed the permission from '{path}'.")
