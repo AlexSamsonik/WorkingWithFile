@@ -3,48 +3,64 @@
 import os
 import logging
 import pytest
-from common.constants import (TEMP_DIRECTORY, LIST_FILE_NAME, FILE_NAME, FILE_NAME_CONTEXT)
-from common.constants import (UID, GID)
-from file_system_operation.ext4_operation import (create_directory, delete_directory, create_files)
+from common.constants import (TEMP_DIRECTORY, LIST_FILE_NAME, FILE_NAME, FILE_NAME_CONTEXT, FILE_OWNER,
+                              FILE_NOBODY_OWNER)
+from common.constants import (UID, GID, UID_NOBODY)
+from common.constants import MODE_644
+from file_system_operation.ext4_operation import (create_directory, delete_directory_tree, create_files)
 
 log = logging.getLogger()
 
 
-@pytest.fixture(scope="session")
 def setup_module():
     """Create temporally directory with files."""
     create_directory(TEMP_DIRECTORY)
     create_files(TEMP_DIRECTORY, LIST_FILE_NAME)
 
 
-@pytest.fixture(scope="session")
 def teardown_module():
     """Recursively delete a directory tree."""
-    delete_directory(TEMP_DIRECTORY)
+    delete_directory_tree(TEMP_DIRECTORY)
 
 
 @pytest.mark.parametrize("file_name", LIST_FILE_NAME)
-def test_create_file(log_test_name, file_name):
-    """ Test file creation.
+def test_file_existing(file_name):
+    """ Test file existing.
 
     Steps:
     1. Create temporally directory if it does not exist.
     2. Create file inside temporally directory.
-    3. Verifies that file has been created successfully inside temporally directory.
+    3. Verifies that file exists inside temporally directory.
     4. Remove file from the temporally directory.
-
-    :param log_test_name: pytest fixture which log when test starting and finishing.
     """
 
     # Step 3
-    log.info(f"Verifies that file '{file_name}' has been created successfully "
-             f"inside the temporally directory '{TEMP_DIRECTORY}'.")
+    log.info(f"Verifies that file '{file_name}' exists inside the temporally directory '{TEMP_DIRECTORY}'.")
     assert os.path.exists(os.path.join(TEMP_DIRECTORY, file_name)), \
-        f"File '{file_name}' has not created successfully inside the temporally directory '{TEMP_DIRECTORY}'."
+        f"File '{file_name}' does not exist inside the temporally directory '{TEMP_DIRECTORY}'."
+
+
+@pytest.mark.parametrize("file_name", LIST_FILE_NAME)
+def test_file_mode(file_name):
+    """ Test file mode.
+
+    Steps:
+    1. Create temporally directory if it does not exist.
+    2. Create file inside temporally directory.
+    3. Verifies that file mode equals 0o644 (-rw-r--r--).
+    4. Remove file from the temporally directory.
+    """
+
+    # Step 3
+    file_path = os.path.join(TEMP_DIRECTORY, file_name)
+    log.info(f"Verifies that file mode equals 0o644 from file '{file_path}'.")
+    actual_mode = oct(os.stat(file_path).st_mode)[-3:]
+    assert actual_mode == MODE_644, f"File '{file_path}' does not have mode 0o644. " \
+                                    f"Actual: '{actual_mode}' Expected: {MODE_644}"
 
 
 @pytest.mark.usefixtures("add_context_to_file")
-def test_add_content_to_file(log_test_name):
+def test_add_content_to_file():
     """ Test file context.
 
     Steps:
@@ -53,12 +69,10 @@ def test_add_content_to_file(log_test_name):
     3. Add context to the file created.
     4. Verifies that file context equals FILE_NAME_CONTEXT.
     5. Remove file from the temporally directory.
-
-    :param log_test_name: pytest fixture which log when test starting and finishing.
     """
 
     # Step 4
-    with open(os.path.join(TEMP_DIRECTORY, FILE_NAME)) as file:  # TODO: try/except ?
+    with open(os.path.join(TEMP_DIRECTORY, FILE_NAME)) as file:
         actual_context = file.read()
     log.info(f"Verifies that file context equals '{FILE_NAME_CONTEXT}'.")
     assert actual_context == FILE_NAME_CONTEXT, f"File context does not match " \
@@ -66,7 +80,7 @@ def test_add_content_to_file(log_test_name):
                                                 f"Expected context: '{FILE_NAME_CONTEXT}'"
 
 
-def test_check_uid(log_test_name, create_and_delete_file):
+def test_check_uid():
     """Test check file UID.
 
     Steps:
@@ -76,13 +90,14 @@ def test_check_uid(log_test_name, create_and_delete_file):
     4. Remove file from the temporally directory.
     """
 
-    # Step 4
-    actual_uid = os.stat(create_and_delete_file).st_uid
-    log.info(f"Verifies that uid equals UID.")
+    # Step 3
+    file_path = os.path.join(TEMP_DIRECTORY, FILE_OWNER)
+    actual_uid = os.stat(file_path).st_uid
+    log.info(f"Verifies that uid equals {actual_uid}.")
     assert actual_uid == UID, f"File uid does not match. Actual UID: '{actual_uid}' Expected UID: '{UID}'"
 
 
-def test_check_gid(log_test_name, create_and_delete_file):
+def test_check_gid():
     """Test check file GID.
 
     Steps:
@@ -92,7 +107,26 @@ def test_check_gid(log_test_name, create_and_delete_file):
     4. Remove file from the temporally directory.
     """
 
-    # Step 4
-    actual_gid = os.stat(create_and_delete_file).st_gid
-    log.info(f"Verifies that uid equals GID.")
+    # Step 3
+    file_path = os.path.join(TEMP_DIRECTORY, FILE_OWNER)
+    actual_gid = os.stat(file_path).st_gid
+    log.info(f"Verifies that uid equals {actual_gid}.")
     assert actual_gid == GID, f"File gid does not match. Actual GID: '{actual_gid}' Expected GID: '{GID}'"
+
+
+@pytest.mark.xfail()
+@pytest.mark.usefixtures("change_owner_to_nobody")
+def test_change_uid():
+    """Test change file UID.
+
+    Steps:
+    1. Create temporally directory if it does not exist.
+    2. Create file inside temporally directory.
+    3. Change uid to nobody.
+    3. Verifies that uid equals UID_NOBODY.
+    4. Remove file from the temporally directory.
+    """
+
+    actual_uid = os.stat(FILE_NOBODY_OWNER).st_uid
+    log.info(f"Verifies that uid equals UID.")
+    assert actual_uid == UID_NOBODY, f"File uid does not match. Actual UID: '{actual_uid}' Expected UID: '{UID}'"
