@@ -41,16 +41,17 @@ def delete_directory_tree(dir_path):
         log.info(f"Successfully deleted the directory three '{dir_path}'.")
 
 
-def create_file(file_path):
-    """Create this file with the given access mode, if it doesn't exist.
+def create_file(file_path, mode=0o644):
+    """Create this file with the mode 0o644 (-rw-r--r--), if it doesn't exist.
 
     :param file_path: path to the file.
+    :param mode: mode for file.
     :return: path to the file.
     """
 
     try:
         log.info(f"Try to create the file '{file_path}'.")
-        Path(file_path).touch(exist_ok=True)
+        Path(file_path).touch(mode=mode, exist_ok=True)
     except OSError:
         log.error(f"Creation of the file '{file_path}' failed.")
         raise
@@ -77,7 +78,7 @@ def remove_file(file_path):
     """
 
     try:
-        log.info(f"Try to removal the file '{file_path}'.")
+        log.info(f"Try to remove the file '{file_path}'.")
         Path(file_path).unlink()
     except OSError:
         log.error(f"Removing of the file '{file_path}' failed.")
@@ -120,3 +121,20 @@ def change_owner(path: str, uid: int, gid: int):
         raise
     else:
         log.info(f"Successfully changed the owner and group to the numeric uid={uid} and gid={gid} from '{path}'.")
+
+
+def change_file_mode(path, mode):
+    """Change the permissions of the path.
+
+    :param path: path to the file.
+    :param mode: new mode.
+    """
+
+    try:
+        log.info(f"Try to change the permission to the path '{path}' by mode '{oct(mode)}'.")
+        Path(path).chmod(mode)
+    except OSError:
+        log.error(f"Changing of the permission failed to the '{path}'.")
+        raise
+    else:
+        log.info(f"Successfully changed the permission from '{path}'.")
